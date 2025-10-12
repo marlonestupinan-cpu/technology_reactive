@@ -4,6 +4,7 @@ import com.example.technology.domain.api.TechnologyServicePort;
 import com.example.technology.domain.enums.TechnicalMessage;
 import com.example.technology.domain.exceptions.BusinessException;
 import com.example.technology.domain.exceptions.TechnicalException;
+import com.example.technology.infrastructure.entrypoints.dto.AddCapacityDto;
 import com.example.technology.infrastructure.entrypoints.dto.TechnologyDto;
 import com.example.technology.infrastructure.entrypoints.mappers.ITechnologyDtoMapper;
 import com.example.technology.infrastructure.entrypoints.util.APIResponse;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.function.Function;
 
 @Component
 @RequiredArgsConstructor
@@ -35,33 +37,17 @@ public class TechnologyHandler {
                         ServerResponse
                                 .ok()
                                 .bodyValue(TechnicalMessage.TECHNOLOGY_ADDED.getMessage()))
-                .onErrorResume(BusinessException.class, ex -> buildErrorResponse(
-                        HttpStatus.BAD_REQUEST,
-                        TechnicalMessage.INVALID_PARAMETERS,
-                        List.of(ErrorDTO.builder()
-                                .code(ex.getTechnicalMessage().getCode())
-                                .message(ex.getTechnicalMessage().getMessage())
-                                .param(ex.getTechnicalMessage().getParam())
-                                .build())))
-                .onErrorResume(TechnicalException.class, ex -> buildErrorResponse(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        TechnicalMessage.INTERNAL_ERROR,
-                        List.of(ErrorDTO.builder()
-                                .code(ex.getTechnicalMessage().getCode())
-                                .message(ex.getTechnicalMessage().getMessage())
-                                .param(ex.getTechnicalMessage().getParam())
-                                .build())))
-                .onErrorResume(ex -> {
-                            log.error("Unexpected error occurred for messageId: ", ex);
-                            return buildErrorResponse(
-                                    HttpStatus.INTERNAL_SERVER_ERROR,
-                                    TechnicalMessage.INTERNAL_ERROR,
-                                    List.of(ErrorDTO.builder()
-                                            .code(TechnicalMessage.INTERNAL_ERROR.getCode())
-                                            .message(TechnicalMessage.INTERNAL_ERROR.getMessage())
-                                            .build()));
-                        }
-                );
+                .transform(errorHandler());
+    }
+
+    public Mono<ServerResponse> addCapacitiesToTechnology(ServerRequest request) {
+        return request
+                .bodyToMono(AddCapacityDto.class)
+                .flatMap(capacityDto -> technologyServicePort
+                        .addCapacityToTechnology(capacityDto.getIdCapacity(), capacityDto.getTechnologies()))
+                .flatMap(savedTechnology ->
+                        ServerResponse.ok().build())
+                .transform(errorHandler());
     }
 
     private Mono<ServerResponse> buildErrorResponse(HttpStatus httpStatus, TechnicalMessage error,
@@ -77,5 +63,35 @@ public class TechnologyHandler {
             return ServerResponse.status(httpStatus)
                     .bodyValue(apiErrorResponse);
         });
+    }
+
+    private <T> Function<Mono<ServerResponse>, Mono<ServerResponse>> errorHandler() {
+        return monoStream ->
+                monoStream
+                        .onErrorResume(BusinessException.class, ex -> buildErrorResponse(
+                                HttpStatus.BAD_REQUEST,
+                                TechnicalMessage.INVALID_PARAMETERS,
+                                List.of(ErrorDTO.builder()
+                                        .code(ex.getTechnicalMessage().getCode())
+                                        .message(ex.getMessage())
+                                        .build())))
+                        .onErrorResume(TechnicalException.class, ex -> buildErrorResponse(
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                TechnicalMessage.INTERNAL_ERROR,
+                                List.of(ErrorDTO.builder()
+                                        .code(ex.getTechnicalMessage().getCode())
+                                        .message(ex.getTechnicalMessage().getMessage())
+                                        .build())))
+                        .onErrorResume(ex -> {
+                                    log.error("Unexpected error occurred for messageId: ", ex);
+                                    return buildErrorResponse(
+                                            HttpStatus.INTERNAL_SERVER_ERROR,
+                                            TechnicalMessage.INTERNAL_ERROR,
+                                            List.of(ErrorDTO.builder()
+                                                    .code(TechnicalMessage.INTERNAL_ERROR.getCode())
+                                                    .message(TechnicalMessage.INTERNAL_ERROR.getMessage())
+                                                    .build()));
+                                }
+                        );
     }
 }
