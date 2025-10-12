@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
@@ -14,6 +15,7 @@ public class RouterRest {
     @Bean
     public RouterFunction<ServerResponse> routerFunction(TechnologyHandler technologyHandler) {
         return route(POST("/tech"), technologyHandler::addTechnology)
-                .andRoute(POST("/tech/capacity"), technologyHandler::addCapacitiesToTechnology);
+                .andRoute(POST("/tech/capability"), technologyHandler::addCapacitiesToTechnology)
+                .andRoute(GET("/tech/capability/{id}"), technologyHandler::getAllTechnologiesByCapacity );
     }
 }
