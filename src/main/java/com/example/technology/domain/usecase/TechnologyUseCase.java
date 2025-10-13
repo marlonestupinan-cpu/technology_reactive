@@ -44,4 +44,9 @@ public class TechnologyUseCase implements TechnologyServicePort {
                 )
                 .then(Mono.just(true));
     }
+
+    @Override
+    public Flux<Technology> getAllTechnologiesByCapacity(Long capacityId) {
+        return technologyPersistencePort.getAllByCapacity(capacityId);
+    }
 }

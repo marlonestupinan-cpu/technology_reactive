@@ -4,6 +4,7 @@ import com.example.technology.domain.api.TechnologyServicePort;
 import com.example.technology.domain.enums.TechnicalMessage;
 import com.example.technology.domain.exceptions.BusinessException;
 import com.example.technology.domain.exceptions.TechnicalException;
+import com.example.technology.domain.model.Technology;
 import com.example.technology.infrastructure.entrypoints.dto.AddCapacityDto;
 import com.example.technology.infrastructure.entrypoints.dto.TechnologyDto;
 import com.example.technology.infrastructure.entrypoints.mappers.ITechnologyDtoMapper;
@@ -47,6 +48,14 @@ public class TechnologyHandler {
                         .addCapacityToTechnology(capacityDto.getIdCapacity(), capacityDto.getTechnologies()))
                 .flatMap(savedTechnology ->
                         ServerResponse.ok().build())
+                .transform(errorHandler());
+    }
+
+    public Mono<ServerResponse> getAllTechnologiesByCapacity(ServerRequest request) {
+        Long id = Long.parseLong(request.pathVariable("id"));
+        return ServerResponse
+                .ok()
+                .body(technologyServicePort.getAllTechnologiesByCapacity(id), Technology.class)
                 .transform(errorHandler());
     }
 

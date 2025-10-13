@@ -9,6 +9,7 @@ import com.example.technology.infrastructure.adapters.mysqladapter.repository.Ca
 import com.example.technology.infrastructure.adapters.mysqladapter.repository.TechnologyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -50,5 +51,12 @@ public class MySQLAdapter implements TechnologyPersistencePort {
     @Override
     public Mono<Boolean> existCapacityForTech(Long idCapacity, Long idTech) {
         return capacityTechnologyRepository.existsByIdCapacityAndIdTechnology(idCapacity, idTech);
+    }
+
+    @Override
+    public Flux<Technology> getAllByCapacity(Long capacityId) {
+        return technologyRepository
+                .findAllByCapabilityId(capacityId)
+                .map(technologyMapper::toTechnology);
     }
 }
