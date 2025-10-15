@@ -59,6 +59,15 @@ public class TechnologyHandler {
                 .transform(errorHandler());
     }
 
+    public Mono<ServerResponse> deleteCapability(ServerRequest request) {
+        Long idCapability = Long.parseLong(request.pathVariable("id"));
+
+        return technologyServicePort
+                .deleteCapability(idCapability)
+                .then(ServerResponse.ok().build())
+                .transform(errorHandler());
+    }
+
     private Mono<ServerResponse> buildErrorResponse(HttpStatus httpStatus, TechnicalMessage error,
                                                     List<ErrorDTO> errors) {
         return Mono.defer(() -> {

@@ -11,4 +11,6 @@ public interface TechnologyServicePort {
     Mono<Boolean> addCapacityToTechnology(Long idCapacity, List<Long> technologies);
 
     Flux<Technology> getAllTechnologiesByCapacity(Long id);
+
+    Mono<Boolean> deleteCapability(Long idCapability);
 }
