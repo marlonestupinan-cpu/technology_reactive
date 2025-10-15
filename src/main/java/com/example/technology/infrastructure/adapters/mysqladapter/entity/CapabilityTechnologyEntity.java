@@ -9,11 +9,11 @@ import org.springframework.data.relational.core.mapping.Table;
 @Data
 @Builder
 @Table("capacidad_tecnologias")
-public class CapacityTechnologyEntity {
+public class CapabilityTechnologyEntity {
     @Id
     private Long id;
     @Column("id_capacidad")
-    private Long idCapacity;
+    private Long idCapability;
     @Column("id_tecnologia")
     private Long idTechnology;
 }

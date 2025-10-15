@@ -2,10 +2,10 @@ package com.example.technology.infrastructure.adapters.mysqladapter;
 
 import com.example.technology.domain.model.Technology;
 import com.example.technology.domain.spi.TechnologyPersistencePort;
-import com.example.technology.infrastructure.adapters.mysqladapter.entity.CapacityTechnologyEntity;
+import com.example.technology.infrastructure.adapters.mysqladapter.entity.CapabilityTechnologyEntity;
 import com.example.technology.infrastructure.adapters.mysqladapter.entity.TechnologyEntity;
 import com.example.technology.infrastructure.adapters.mysqladapter.mapper.ITechnologyEntityMapper;
-import com.example.technology.infrastructure.adapters.mysqladapter.repository.CapacityTechnologyRepository;
+import com.example.technology.infrastructure.adapters.mysqladapter.repository.CapabilityTechnologyRepository;
 import com.example.technology.infrastructure.adapters.mysqladapter.repository.TechnologyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class MySQLAdapter implements TechnologyPersistencePort {
     private final TechnologyRepository technologyRepository;
-    private final CapacityTechnologyRepository capacityTechnologyRepository;
+    private final CapabilityTechnologyRepository capabilityTechnologyRepository;
     private final ITechnologyEntityMapper technologyMapper;
 
     @Override
@@ -33,11 +33,11 @@ public class MySQLAdapter implements TechnologyPersistencePort {
     }
 
     @Override
-    public Mono<Boolean> addCapacity(Long idCapacity, Long idTechnology) {
-        return capacityTechnologyRepository
+    public Mono<Boolean> addCapability(Long idCapacity, Long idTechnology) {
+        return capabilityTechnologyRepository
                 .save(
-                        CapacityTechnologyEntity.builder()
-                                .idCapacity(idCapacity)
+                        CapabilityTechnologyEntity.builder()
+                                .idCapability(idCapacity)
                                 .idTechnology(idTechnology)
                                 .build()
                 ).hasElement();
@@ -49,14 +49,34 @@ public class MySQLAdapter implements TechnologyPersistencePort {
     }
 
     @Override
-    public Mono<Boolean> existCapacityForTech(Long idCapacity, Long idTech) {
-        return capacityTechnologyRepository.existsByIdCapacityAndIdTechnology(idCapacity, idTech);
+    public Mono<Boolean> existCapabilityForTech(Long idCapability, Long idTech) {
+        return capabilityTechnologyRepository.existsByIdCapabilityAndIdTechnology(idCapability, idTech);
     }
 
     @Override
-    public Flux<Technology> getAllByCapacity(Long capacityId) {
+    public Flux<Technology> getAllByCapability(Long idCapability) {
         return technologyRepository
-                .findAllByCapabilityId(capacityId)
+                .findAllByCapabilityId(idCapability)
                 .map(technologyMapper::toTechnology);
+    }
+
+    @Override
+    public Flux<Technology> deleteAllCapabilityTechnology(Long idCapability) {
+        return getAllByCapability(idCapability)
+                .collectList()
+                .flatMapMany(technologies ->
+                        capabilityTechnologyRepository
+                                .deleteAllByIdCapability(idCapability)
+                                .thenMany(Flux.fromIterable(technologies)));
+    }
+
+    @Override
+    public Mono<Boolean> hasCapabilityAssociated(Technology technology) {
+        return capabilityTechnologyRepository.existsByIdTechnology(technology.getId());
+    }
+
+    @Override
+    public Mono<Void> delete(Technology technology) {
+        return technologyRepository.deleteById(technology.getId());
     }
 }

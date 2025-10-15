@@ -9,11 +9,17 @@ public interface TechnologyPersistencePort {
 
     Mono<Boolean> existByName(String name);
 
-    Mono<Boolean> addCapacity(Long idCapacity, Long idTechnology);
+    Mono<Boolean> addCapability(Long idCapacity, Long idTechnology);
 
     Mono<Boolean> existById(Long id);
 
-    Mono<Boolean> existCapacityForTech(Long idCapacity, Long idTech);
+    Mono<Boolean> existCapabilityForTech(Long idCapability, Long idTech);
 
-    Flux<Technology> getAllByCapacity(Long capacityId);
+    Flux<Technology> getAllByCapability(Long idCapability);
+
+    Flux<Technology> deleteAllCapabilityTechnology(Long idCapability);
+
+    Mono<Boolean> hasCapabilityAssociated(Technology technology);
+
+    Mono<Void> delete(Technology technology);
 }

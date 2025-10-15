@@ -36,10 +36,10 @@ public class TechnologyUseCase implements TechnologyServicePort {
                                 .filter(exist -> exist)
                                 .switchIfEmpty(Mono.error(new BusinessException(TechnicalMessage.TECH_NOT_FOUND, idTech.toString())))
                                 .flatMap(exist -> technologyPersistencePort
-                                        .existCapacityForTech(idCapacity, idTech)
+                                        .existCapabilityForTech(idCapacity, idTech)
                                         .filter(existCapacity -> !existCapacity)
                                         .switchIfEmpty(Mono.error(new BusinessException(TechnicalMessage.CAPACITY_ALREADY_EXIST, idTech.toString(), idCapacity.toString())))
-                                        .flatMap(existCapacity -> technologyPersistencePort.addCapacity(idCapacity, idTech))
+                                        .flatMap(existCapacity -> technologyPersistencePort.addCapability(idCapacity, idTech))
                                 )
                 )
                 .then(Mono.just(true));
@@ -47,6 +47,20 @@ public class TechnologyUseCase implements TechnologyServicePort {
 
     @Override
     public Flux<Technology> getAllTechnologiesByCapacity(Long capacityId) {
-        return technologyPersistencePort.getAllByCapacity(capacityId);
+        return technologyPersistencePort.getAllByCapability(capacityId);
+    }
+
+    @Override
+    public Mono<Boolean> deleteCapability(Long idCapability) {
+        // Primero eliminamos todas las relaciones de capacidad con tecnología
+        Flux<Technology> techs = technologyPersistencePort.deleteAllCapabilityTechnology(idCapability);
+
+        // Intentamos eliminar solo las tecnologías que ya no tengan ninguna relación con otra capacidad
+        return techs
+                .filterWhen(technology -> technologyPersistencePort
+                        .hasCapabilityAssociated(technology)
+                        .map(exist -> !exist))
+                .flatMap(technologyPersistencePort::delete)
+                .then(Mono.just(true));
     }
 }
